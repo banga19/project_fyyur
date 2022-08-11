@@ -13,6 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from sqlalchemy.orm import relationship
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -70,9 +71,20 @@ class Artist(db.Model):
       return f'<Artist ID: {self.id}, Artist Name: {self.name}>'
     
 #db.create_all() <--creates tables to the psql database
+
+
+class Show(db.Model):
+  __tablename__ = 'Show'
+
+  artist_id = db.Column(db.Integer, primary_key=True)
+  venue_id = db.Column(db.Integer)
+  start_time = db.Column(db.DateTime())
+
+
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -111,7 +123,6 @@ def venues():
       "id": 1,
       "name": "The Musical Hop",
       "num_upcoming_shows": 0,
-    }, {
       "id": 3,
       "name": "Park Square Live Music & Coffee",
       "num_upcoming_shows": 1,
