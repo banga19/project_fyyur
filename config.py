@@ -1,4 +1,6 @@
 import os
+
+
 SECRET_KEY = os.urandom(32)
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -7,7 +9,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Connect to the database
-SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-# TODO IMPLEMENT DATABASE URL
 SQLALCHEMY_DATABASE_URI = 'postgresql://banga:banga123@localhost:5432/fyyur'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+## helps showcasing errors
+PYTHONUNBUFFERED=""
