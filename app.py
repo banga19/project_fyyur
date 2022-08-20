@@ -16,28 +16,20 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
  
-#from extensions import csrf
 
-from models import db, Venue, Show, Artist
+
+from models import db, Venue, Artist, Show
 
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
-
-db = SQLAlchemy()
 app =  Flask(__name__)
-
-
-def  create_app():
-  with app.app_context():
-    user = db.User()
-    db.session.add(user)
-    db.init_app(app)
-    return app
-
 moment = Moment(app)
-migrate = Migrate(app, db)
 app.config.from_object('config')
+db.init_app(app)
+
+migrate = Migrate(app, db)
+
 
 
 #----------------------------------------------------------------------------#
@@ -136,13 +128,13 @@ def venues():
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   
-  search_time = request.form.get("search_term", "")
+  search_term= request.form.get("search_term", "")
 
   response = {}
   venues = list(Venue.query.filter(
-    Venue.state.ilike(f"%{search_time}%") |
-    Venue.name.ilike(f"%{search_time}%") |
-    Venue.city.ilike(f"%{search_time}%")
+    Venue.state.ilike(f"%{search_term}%") |
+    Venue.name.ilike(f"%{search_term}%") |
+    Venue.city.ilike(f"%{search_term}%")
   ).all())
 
   response['count'] = len(venues)
@@ -336,7 +328,7 @@ def search_artists():
   response = {}
   artists = list(Artist.query.filter(
     Artist.state.ilike(f"%{search_term}%") |
-    Artist.name.ilike(f"%{search_term%}") |
+    Artist.name.ilike(f"%{search_term}%") |
     Artist.city.ilike(f"%{search_term}%")
   ).all())
 
@@ -469,7 +461,7 @@ def edit_artist_submission(artist_id):
       artist_details.city = form.city.data,
       artist_details.state = form.state.data,
       artist_details.phone = form.phone.data,
-      artist_details.website = form.website.data,
+      artist_details.website = form.website_link.data,
       artist_details.facebook_link = form.facebook_link.data
       artist_details.seeking_description = form.seeking_description.data
       artist_details.image_link = form.image_link.data
@@ -542,23 +534,23 @@ def edit_venue_submission(venue_id):
     try:
       venue_details = Venue.query.get(venue_id)
       
-      venue_details.name = form.name.data.get
-      venue_details.genres = "".join(form.genres.data)
-      venue_details.state = form.state.data
-      venue_details.address = form.address.data
-      venue_details.city = form.city.data
-      venue_details.phone = form.phone.data
-      venue_details.website_link = form.website_link.data
-      venue_details.facebook_link = form.facebook_link.data
-      venue_details.seeking_description = form.facebook_link.data
-      venue_details.image_link = form.image_link.data
-      venue_details.seeking_talent = form.seeking_talent.data
+      venue_details.name = form.name.data,
+      venue_details.genres = "".join(form.genres.data),
+      venue_details.state = form.state.data,
+      venue_details.address = form.address.data,
+      venue_details.city = form.city.data,
+      venue_details.phone = form.phone.data,
+      venue_details.website_link = form.website_link.data,
+      venue_details.facebook_link = form.facebook_link.data,
+      venue_details.seeking_description = form.facebook_link.data,
+      venue_details.image_link = form.image_link.data,
+      venue_details.seeking_talent = form.seeking_talent.data,
 
       db.session.commit()
       flash('Venue' + request.form['name'] + 'was succesfully listed')
 
     except:
-      print('i am except')
+      print('code displays when `except` possibility occurs')
       print(sys.exc_info())
       flash('venue' + request.form['name'] + 'Failure to update')
       db.session.rollback()
@@ -583,15 +575,15 @@ def create_artist_submission():
   if form.validate():
     try:
       new_artist = Artist(
-        name = form.name.data
-        city = form.city.data
-        state = form.state.data
-        phone = form.phone.data
-        genres = "".join(form.genres.data)
-        facebook_link = form.facebook_link.data
-        image_link = form.image_link.data
-        seeking_venue = form.seeking_venue.data
-        seeking_description = form.seeking_description.data
+        name = form.name.data,
+        city = form.city.data,
+        state = form.state.data,
+        phone = form.phone.data,
+        genres = "".join(form.genres.data),
+        facebook_link = form.facebook_link.data,
+        image_link = form.image_link.data,
+        seeking_venue = form.seeking_venue.data,
+        seeking_description = form.seeking_description.data,
         website_link = form.website_link.data
       )
       
@@ -610,7 +602,7 @@ def create_artist_submission():
     flash('Could not create artist, Kindly enter a valid input')
 
 
-### Delte Artist
+### Delete Artist
 @app.route('/artists/<artist_id>/delete', methods=['POST'])
 def delete_artist(artist_id):
   try:
@@ -665,8 +657,8 @@ def create_show_submission():
   form = ShowForm(request.form)
   if form.validate():
     try:
-      show_new = Show(artist_id = form.artist_id.data
-        venue_id = form.venue_id.data
+      show_new = Show(artist_id = form.artist_id.data,
+        venue_id = form.venue_id.data,
         start_time = form.start_time.data)
       db.session.add(show_new)
       db.session.commit()
@@ -680,7 +672,7 @@ def create_show_submission():
       db.session.close()
       return render_template('pages/home.html')
 
-  
+
 
 @app.errorhandler(404)
 def not_found_error(error):

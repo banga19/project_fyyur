@@ -66,4 +66,3 @@ class Show(db.Model):
         return f"<Show id={self.id}, artist_id={self.artist_id}, venue_id={self.venue_id}, start_time={self.start_time}>"
 
 
-db.create_all()
