@@ -15,8 +15,6 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
- 
-
 
 from models import db, Venue, Artist, Show
 
@@ -99,29 +97,6 @@ def venues():
   return render_template('pages/venues.html', areas=data)
 
 
-#########################################  
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data)
-################################
 
 
 
@@ -150,17 +125,6 @@ def search_venues():
   
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
-
-  #
-  #response={
-    #"count": 1,
-    #"data": [{
-    #"id": 2,
-    #"name": "The Dueling Pianos Bar",
-      #"num_upcoming_shows": 0,
-    #}]
-  #}
-  
 
 
 ###################
@@ -287,17 +251,7 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  #data=[{
-  # "id": 4,
-  #  "name": "Guns N Petals",
-  #}, {
-  #  "id": 5,
-  #  "name": "Matt Quevedo",
-  #}, {
-  # "id": 6,
-  #  "name": "The Wild Sax Band",
-  #}]
+
 
   artists = Artist.query.all()
   data = []
@@ -312,17 +266,7 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-  # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-  # search for "band" should return "The Wild Sax Band".
-  #response={
-    #"count": 1,
-    #"data": [{
-    #  "id": 4,
-    #  "name": "Guns N Petals",
-    #  "num_upcoming_shows": 0,
-    #}]
-  #}
+
   search_term = request.form.get("search_term", "")
 
   response = {}
@@ -431,20 +375,7 @@ def edit_artist(artist_id):
   
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
-  #artist={
-  #  "id": 4,
-  #  "name": "Guns N Petals",
-  #  "genres": ["Rock n Roll"],
-  # "city": "San Francisco",
-  # "state": "CA",
-  #"phone": "326-123-5000",
-  #  "website": "https://www.gunsnpetalsband.com",
-  #  "facebook_link": "https://www.facebook.com/GunsNPetals",
-  #  "seeking_venue": True,
-  #  "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-  #  "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  #}
-  
+
   
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
@@ -505,22 +436,6 @@ def edit_venue(venue_id):
   }
 
   return render_template('forms/edit_venue.html', form=form, venue=venue)
-
-  #venue={
-  #  "id": 1,
-  #  "name": "The Musical Hop",
-  #  "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-  #  "address": "1015 Folsom Street",
-  #  "city": "San Francisco",
-  #  "state": "CA",
-  #  "phone": "123-123-1234",
-  #  "website": "https://www.themusicalhop.com",
-  #  "facebook_link": "https://www.facebook.com/TheMusicalHop",
-  #  "seeking_talent": True,
-  #  "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-  #  "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  #}
-
   
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
