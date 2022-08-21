@@ -28,7 +28,7 @@ app.config.from_object('config')
 db.init_app(app)
 
 migrate = Migrate(app, db)
-db = SQLAlchemy(app)
+
 
 
 #----------------------------------------------------------------------------#
