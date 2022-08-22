@@ -17,12 +17,12 @@ class Venue(db.Model):
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
-    genre = db.Column(db.String())
+    genre = db.Column(db.String(), nullable=True)
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
     show = db.relationship("Show", backref="venues", lazy=False, cascade="all, delete-orphan")
 
 

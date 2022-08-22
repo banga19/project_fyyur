@@ -138,7 +138,7 @@ def show_venue(venue_id):
   upcoming_show = []
 
   # code that deals with past shows
-  past_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time<datetime.now().all())
+  past_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time<datetime.now()).all()
   
   for show in past_shows:
     artist = Artist.query.get(show.artist_id)
@@ -146,44 +146,44 @@ def show_venue(venue_id):
       "artist_id": artist.id,
       "artist_name": artist.name,
       "artist_image_link": artist.image_link,
-      "start_time": show.start_time.strftime("%m%d%Y, %H:%M%S")
+      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M%S")
     })
 
-    # code that deals with upcoming shows
-    upcoming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time>datetime.now()).all()
+  # code that deals with upcoming shows
+  upcoming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time>datetime.now()).all()
 
-    for show in upcoming_shows:
-      artist_up = Artist.query.get(show.artist_id)
-      upcoming_show.append({
-        "artist_id": artist_up.id,
-        "artist_name": artist_up.name,
-        "artist_image_link": artist_up.image_link,
-        "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-      })
+  for show in upcoming_shows:
+    artist_up = Artist.query.get(show.artist_id)
+    upcoming_show.append({
+      "artist_id": artist_up.id,
+      "artist_name": artist_up.name,
+      "artist_image_link": artist_up.image_link,
+      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    })
 
-    item_obj = {
-      "id": venue.id,
-      "name": venue.name,
-      "genres": venue.gender.split(),
-      "address": venue.address,
-      "city": venue.city,
-      "state": venue.state,
-      "phone": venue.phone,
-      "wesbite": venue.website_link,
-      "facebook_link": venue.facebook_link,
-      "seeking_talent": venue.seeking_talent,
-      "seeking_description": venue.seeking_description,
-      "image_link": venue.image_link,
-      "past_shows": past_show,
-      "upcoming_shows": upcoming_show,
-      "past_shows_count": len(past_shows),
-      "upcoming_shows_count": len(upcoming_shows),
-    }
+  item_obj = {
+    "id": venue.id,
+    "name": venue.name,
+    "genre": venue.genre,
+    "address": venue.address,
+    "city": venue.city,
+    "state": venue.state,
+    "phone": venue.phone,
+    "wesbite": venue.website_link,
+    "facebook_link": venue.facebook_link,
+    "seeking_talent": venue.seeking_talent,
+    "seeking_description": venue.seeking_description,
+    "image_link": venue.image_link,
+    "past_shows": past_show,
+    "upcoming_shows": upcoming_show,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows),
+  }
 
-    data.append(item_obj)
+  data.append(item_obj)
 
-    data = list(filter(lambda d: d['id'] == venue_id, data))[0]
-    return render_template('pages/show_venue.html', venue=data)
+  data = list(filter(lambda d: d['id'] == venue_id, data))[0]
+  return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
 #  ----------------------------------------------------------------
