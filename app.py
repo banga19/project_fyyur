@@ -1,20 +1,21 @@
 #----------------------------------------------------------------------------#
 # Imports
 #----------------------------------------------------------------------------#
-from dataclasses import dataclass
 import json
-from flask_migrate import Migrate
-import dateutil.parser
-from sqlalchemy.sql import select, func
+import dateutil.pasrser
 import babel
-import sys
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response,  flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+#from flask_wtf import FlaskForm (not used here but in forms.py)
+from datetime import datetime
+from flask_migrate import Migrate
+
 from forms import *
+import re
+from operator import itemgetter # for sorting lists if tuples
 
 from models import db, Venue, Artist, Show
 
@@ -25,10 +26,10 @@ from models import db, Venue, Artist, Show
 app =  Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db.init_app(app)
+#db.init_app(app)
+db = SQLAlchemy(app)
 
-migrate = Migrate(app, db)
-
+migrate = Migrate(app, db)  
 
 
 #----------------------------------------------------------------------------#
@@ -60,130 +61,182 @@ def index():
 @app.route('/venues')
 def venues():
 
+
+  # Get data on the venues and populate the data list.  Grouped by City
+  # venues = Venue.query.order_by(Venue.state, Venue.city.asc()).all()
+  # Order_by here not working since order changes is lost when we put it into a set.
   venues = Venue.query.all()
-  data = []
-  view_states = []
-
-  for venue in venues:
-    state = venue.state
-    all_states = Venue.query.filter_by(state = state).all()
-
-    if state in view_states:
-      continue
-
-    item_obj = {
-      "city": venue.city,
-      "state": venue.state,
-      "venues": []
-    }
-
-    #updating the view_states array above 
-    view_states.append(state)
+  
+  data = []  # A list of dictionaries, where city, state, and venues are dictionary keys
+  
+  # Create a set of all the cities/states combinations uniquely
+  cities_states = set()
+  for Venue in venues:
+    cities_states.add([(Venue.city, Venue.state)]) # this line adds tuple
 
 
-    # this inner loop will group all_states 
-    for state in all_states:
+  #Turning the state into an orderd list
+  cities_states = list(cities_states) 
+  cities_states.sort(key=itemgetter(1,0)) # sorts the second column first (state) then by city
 
-      result = Show.query.filter_by(venue_id = venue.id).all()
+  now = datetime.now()
 
-      item_obj["venues"].append({
-        "id": state.id,
-        "name": state.name,
-        "num_upcoming_shows": len(result),
-      })
+  # iterating over the unique values to seed the data dictionary with city/state locations
+  for loc in cities_states:
+    venues_list =  []
 
-    
-    #saves the groupings and collections to the database
-    data.append(item_obj)
-  return render_template('pages/venues.html', areas=data)
+    for venue in venues:
+      if(venue.city == loc[0] and venue.state == loc[1]):
+          # If we've got a venue to add, check how many upcoming shows it has
+          venue_shows = Show.query.filter_by(venue_id=venue.id).all()
+          num_upcoming = 0
+          for show in venue_shows:
+            if show.start_time > now:
+              num_upcoming += 1
 
+          venues_list.append({
+            "id", venue.id,
+            "name", venue.name,
+            "num_upcoming_shows", num_upcoming,
+          })
 
+    # After all venues are added to the list for a given location, add it to the data dictionary
+    data.append({
+      "city": loc[0],
+      "state": loc[1],
+      "venues": venues_list
+    })
 
+    #TODO: Add dummy data below to database 
 
+    # data = [{
+    #     "city": "San Francisco",
+    #     "state": "CA",
+    #     "venues": [{
+    #         "id": 1,
+    #         "name": "The Musical Hop",
+    #         "num_upcoming_shows": 0,
+    #     }, {
+    #         "id": 3,
+    #         "name": "Park Square Live Music & Coffee",
+    #         "num_upcoming_shows": 1,
+    #     }]
+    # }, {
+    #     "city": "New York",
+    #     "state": "NY",
+    #     "venues": [{
+    #         "id": 2,
+    #         "name": "The Dueling Pianos Bar",
+    #         "num_upcoming_shows": 0,
+    #     }]
+    # }]
+    return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   
-  search_term= request.form.get("search_term", "")
+  search_term = request.form.get('search_term', '').strip()
 
-  response = {}
-  venues = list(Venue.query.filter(
-    Venue.state.ilike(f"%{search_term}%") |
-    Venue.name.ilike(f"%{search_term}%") |
-    Venue.city.ilike(f"%{search_term}%")
-  ).all())
+  venues = Venue.query.filter(Venue.name.ilike('%' + search_term + '%')).all() #wildcard search before and after
 
-  response['count'] = len(venues)
-  response["data"] = []
-  
+  venue_list = []
+  now = datetime.now()
   for venue in venues:
-    venue_unit = {
-      "id": venue.id,
-      "name": venue.name,
-      "num_upcoming_shows": len(list(filter(lambda x: x.start_time > datetime.now(), venue.shows)))
-    }
-    response["data"].append(venue_unit)
+    venue_shows = Show.query.filter_by(venue_id=venue.id).all()
+    num_upcoming = 0
+    for show in venue_shows:
+      if show.start_time > now:
+        num_upcoming += 1
+
+    venue_list.append({
+      "id", venue.id,
+      "name", venue.name,
+      "num_upcoming_shows", num_upcoming
+    })
   
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  response = {
+    "Count": len(venues),
+    "data": venue_list,
+  }
 
+  ##response dummy data
+    # response = {
+    #     "count": 1,
+    #     "data": [{
+    #         "id": 2,
+    #         "name": "The Dueling Pianos Bar",
+    #         "num_upcoming_shows": 0,
+    #     }]
+    # }
 
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
+  
 
 ###################
 
 @app.route('/venues/<int:venue_id>')
-def show_venue(venue_id):
+def show_venue(venue_id): # shows the venue page with the given venue_id
+  # Get all the data from the DB and populate the data dictionary (context)
+
   venue = Venue.query.get(venue_id)
-  data = []
-  past_show = []
-  upcoming_show = []
+  print(venue)
 
-  # code that deals with past shows
-  past_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time<datetime.now()).all()
+  if not venue:
+    # Didn't return a value or user must've hand-typed a link into the browser that doesn't exist
+    # Redirect home
+    return redirect(url_for('index'))
+  else:
+    # genres need to be a list of genre strings for the template format required
+    genres = [genre.name for genre in venue.genres]
+
+    # get a list of shows, and count the ones in the past and future
+    past_shows = []
+    past_shows_count = 0
+    upcoming_shows = []
+    upcoming_shows_count = 0
+    now = datetime.now()
+
+    for show in venue.shows:
+      if show.start_time > now:
+        upcoming_shows_count += 1
+        upcoming_shows.append({
+          "artsist_id": show.artist_id,
+          "artist_name": show.artist.name,
+          "artist_image_link": show.artist.image_link,
+          "start_time": format_datetime(str(show.start_time))
+        })
+      if show.start_time < now:
+        past_shows_count += 1
+        past_shows.append({
+          "artsist_id": show.artist_id,
+          "artist_name": show.artist.name,
+          "artist_image_link": show.artist.image_link,
+          "start_time": format_datetime(str(show.start_time))
+        })
+
+    ##data template
+    data = {
+      "id": venue_id,
+      "name": venue.name,
+      "genres": genres,
+      "address": venue.address,
+      "city": venue.city,
+      "state": venue.state,
+      # add the dashes for the phone number
+      "phone": (venue.phone[:3] + '-'  + venue.phone[3:6] + '-' + venue.phone[6:]),
+      "website": venue.website,
+      "facebook_link": venue.facebook_link,
+      "seeking_talent": venue.seeking_talent,
+      "seeking_description": venue.seeking_description,
+      "image_link": venue.image_link,
+      "past_shows": past_shows,
+      "past_shows_count": past_shows_count,
+      "upcoming_shows": upcoming_shows,
+      "upcoming_shows_count": upcoming_shows_count,
+    }
   
-  for show in past_shows:
-    artist = Artist.query.get(show.artist_id)
-    past_show.append({
-      "artist_id": artist.id,
-      "artist_name": artist.name,
-      "artist_image_link": artist.image_link,
-      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M%S")
-    })
-
-  # code that deals with upcoming shows
-  upcoming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id == venue.id).filter(Show.start_time>datetime.now()).all()
-
-  for show in upcoming_shows:
-    artist_up = Artist.query.get(show.artist_id)
-    upcoming_show.append({
-      "artist_id": artist_up.id,
-      "artist_name": artist_up.name,
-      "artist_image_link": artist_up.image_link,
-      "start_time": show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-    })
-
-  item_obj = {
-    "id": venue.id,
-    "name": venue.name,
-    "genre": venue.genre,
-    "address": venue.address,
-    "city": venue.city,
-    "state": venue.state,
-    "phone": venue.phone,
-    "wesbite": venue.website_link,
-    "facebook_link": venue.facebook_link,
-    "seeking_talent": venue.seeking_talent,
-    "seeking_description": venue.seeking_description,
-    "image_link": venue.image_link,
-    "past_shows": past_show,
-    "upcoming_shows": upcoming_show,
-    "past_shows_count": len(past_shows),
-    "upcoming_shows_count": len(upcoming_shows),
-  }
-
-  data.append(item_obj)
-
-  data = list(filter(lambda d: d['id'] == venue_id, data))[0]
   return render_template('pages/show_venue.html', venue=data)
+
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -252,17 +305,18 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-
-
-  artists = Artist.query.all()
   data = []
+  
+  artists = Artist.query.all()
   for artist in artists:
     item_obj = {
       "id": artist.id,
       "name": artist.name,
     }
-    data.append(item_obj)
+  
 
+  data.append(item_obj)
+  
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -299,7 +353,7 @@ def show_artist(artist_id):
   upcoming_shows = []
   past_shows = []
 
-  past_shows_results = db.session.query(Show).join(Venue).filter(Show.artist_id == artist.id).filter(Show.start_time<datetime.now()).all()
+  past_shows_results = db.session.query(Show).join(Venue).filter(Show.artist_id == artists.id).filter(Show.start_time<datetime.now()).all()
 
 
   #data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
@@ -317,7 +371,7 @@ def show_artist(artist_id):
 
   
   ## upcoming shows perfomed by artist
-  upcoming_shows_results = db.session.query(Show).join(Venue).filter(Show.artist_id == artist.id).filter(Show.start_time>datetime.now()).all()
+  upcoming_shows_results = db.session.query(Show).join(Venue).filter(Show.artist_id == artists.id).filter(Show.start_time>datetime.now()).all()
 
   for show in upcoming_shows_results:
     venue_item = Venue.query.get(show.venue_id)
@@ -332,7 +386,7 @@ def show_artist(artist_id):
   item_obj = {
     "id": artist.id,
     "name": artist.name,
-    "genre": artist.genre.split(),
+    "genre": artist.genre,
     "city": artist.city,
     "state": artist.state,
     "phone": artist.phone,
@@ -586,7 +640,7 @@ def create_show_submission():
       db.session.rollback()
     finally:
       db.session.close()
-      return render_template('pages/home.html')
+  return render_template('pages/home.html')
 
 
 
@@ -613,15 +667,14 @@ if not app.debug:
 # Launch.
 #----------------------------------------------------------------------------#
 
-# Default port:
-''' 
+# Default port: 
 if __name__ == '__main__':
     app.run()
-'''
+
 
 
 # Or specify port manually:
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 4000))
-    app.run(host='0.0.0.0', port=port)
+#if __name__ == '__main__':
+#    port = int(os.environ.get('PORT', 4000))
+#    app.run(host='0.0.0.0', port=port)
