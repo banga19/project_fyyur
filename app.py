@@ -2,7 +2,7 @@
 # Imports
 #----------------------------------------------------------------------------#
 import json
-import dateutil.pasrser
+import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response,  flash, redirect, url_for, abort, jsonify
 from flask_moment import Moment
