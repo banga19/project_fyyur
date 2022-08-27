@@ -7,10 +7,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 # Enable debug mode.
 DEBUG = True
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
 # Connect to the database
-
 SQLALCHEMY_DATABASE_URI = 'postgresql://banga:banga123@localhost:5432/fyyur'
-SQLALCHEMY_TRACK_MODIFICATIONS = False
-## helps showcasing errors
-PYTHONUNBUFFERED=""
