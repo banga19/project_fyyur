@@ -11,7 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "babel": "^6.23.0",
-    "bootstrap": "^5.3.6"
+    "bootstrap": "^5.3.6",
+    "dateutil": "^0.1.0"
   },
   "repository": {
     "type": "git",
