@@ -11,6 +11,15 @@
   "license": "ISC",
   "dependencies": {
     "babel": "^6.23.0",
-    "bootstrap": "^3.4.1"
-  }
+    "bootstrap": "^5.3.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banga19/project_fyyur.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/banga19/project_fyyur/issues"
+  },
+  "homepage": "https://github.com/banga19/project_fyyur#readme"
 }
